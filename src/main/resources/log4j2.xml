@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <!-- 基础配置 -->
+        <Property name="logdir">D:/dev_tools/logs</Property>
+        <Property name="logfile-app">web-app</Property>
+        <Property name="logfile-alm">web-alm</Property>
+        <Property name="logfile-ope">web-ope</Property>
+        
+        <!-- 日志布局优化：增加毫秒精度，统一格式 -->
+        <Property name="layout">%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%t] %c{1}#%M %m%n</Property>
+        <!-- 修正拼写错误 ALERM -> ALARM -->
+        <Property name="layout-alm">%d{yyyy-MM-dd HH:mm:ss.SSS} ALARM [%t] %c{1}#%M %m%n</Property>
+        
+        <!-- 安全配置：防止JNDI注入 -->
+        <Property name="log4j2.formatMsgNoLookups">true</Property>
+        
+        <!-- 滚动策略参数统一管理 -->
+        <Property name="rollover-interval">1</Property>
+        <Property name="max-history-app">31</Property>
+        <Property name="max-history-ope">366</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- 控制台输出 -->
+        <Console name="stdout" target="SYSTEM_OUT">
+            <PatternLayout pattern="${layout}" />
+        </Console>
+
+        <!-- 应用日志：每日滚动，保留31天 -->
+        <RollingFile name="app" 
+                     append="true"
+                     fileName="${logdir}/${logfile-app}.log"
+                     filePattern="${logdir}/${logfile-app}.%d{yyyyMMdd}.log">
+            <PatternLayout pattern="${layout}" />
+            <Policies>
+                <!-- 明确时间滚动策略：每天凌晨滚动 -->
+                <TimeBasedTriggeringPolicy interval="${rollover-interval}" modulate="true" />
+                <!-- 增加文件大小限制，防止单个文件过大 -->
+                <SizeBasedTriggeringPolicy size="100MB" />
+            </Policies>
+            <DefaultRolloverStrategy>
+                <!-- 自动删除过期日志 -->
+                <Delete basePath="${logdir}" maxDepth="1">
+                    <IfFileName glob="${logfile-app}.*.log" />
+                    <IfLastModified age="${max-history-app}d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- 告警日志：仅记录重要级别，保留31天 -->
+        <RollingFile name="alm" 
+                     append="true"
+                     fileName="${logdir}/${logfile-alm}.log"
+                     filePattern="${logdir}/${logfile-alm}.%d{yyyyMMdd}.log">
+            <PatternLayout pattern="${layout-alm}" />
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="${rollover-interval}" modulate="true" />
+                <SizeBasedTriggeringPolicy size="50MB" />
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="${logdir}" maxDepth="1">
+                    <IfFileName glob="${logfile-alm}.*.log" />
+                    <IfLastModified age="${max-history-app}d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- 操作日志：长期保留，保留366天 -->
+        <RollingFile name="ope" 
+                     append="true"
+                     fileName="${logdir}/${logfile-ope}.log"
+                     filePattern="${logdir}/${logfile-ope}.%d{yyyyMMdd}.log">
+            <PatternLayout pattern="${layout}" />
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="${rollover-interval}" modulate="true" />
+                <SizeBasedTriggeringPolicy size="200MB" />
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="${logdir}" maxDepth="1">
+                    <IfFileName glob="${logfile-ope}.*.log" />
+                    <IfLastModified age="${max-history-ope}d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- 第三方组件日志控制 -->
+        <Logger name="com.zaxxer.hikari.HikariConfig" level="INFO" additivity="false">
+            <AppenderRef ref="stdout" />
+            <AppenderRef ref="app" />
+        </Logger>
+        
+        <!-- 关闭不必要的框架日志，添加Appender引用避免日志丢失 -->
+        <Logger name="org.springframework" level="OFF" additivity="false">
+            <AppenderRef ref="app" />
+        </Logger>
+        <Logger name="org.struts" level="info" additivity="true">
+            <AppenderRef ref="app" />
+        </Logger>
+        <Logger name="org.ehcache.core.EhcacheManager" level="OFF" additivity="false">
+            <AppenderRef ref="app" />
+        </Logger>
+        <Logger name="org.ehcache.jsr107.Eh107CacheManager" level="OFF" additivity="false">
+            <AppenderRef ref="app" />
+        </Logger>
+        <Logger name="org.springframework.data.repository.config.RepositoryConfigurationDelegate" 
+                level="OFF" additivity="false">
+            <AppenderRef ref="app" />
+        </Logger>
+
+        <!-- 根日志配置：区分不同日志的级别 -->
+        <Root level="info">
+            <AppenderRef ref="stdout" />
+            <AppenderRef ref="app" level="info" />
+            <!-- 告警日志只记录警告及以上级别 -->
+            <AppenderRef ref="alm" level="warn" />
+            <!-- 操作日志关联到根日志 -->
+            <AppenderRef ref="ope" level="info" />
+        </Root>
+
+        <!-- 应用特定日志 -->
+        <Logger name="com.example.s7" level="debug" additivity="false">
+            <AppenderRef ref="stdout" />
+            <AppenderRef ref="app" />
+        </Logger>
+        
+        <!-- 错误级别日志处理，关闭日志继承避免重复 -->
+        <Logger name="com.blazebit.annotation.AnnotationUtils" level="ERROR" additivity="false">
+            <AppenderRef ref="stdout" />
+            <AppenderRef ref="alm" />
+        </Logger>
+    </Loggers>
+</Configuration>

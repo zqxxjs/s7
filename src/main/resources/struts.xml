@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+	"-//Apache Software Foundation//DTD Struts Configuration 6.0//EN"
+	"http://struts.apache.org/dtds/struts-6.0.dtd">
+<struts>
+
+	<!-- struts-json 有重大问题，json数据的解析是有问题的，连jackson之类的解析包都不用，自己写的解析，稍复杂的json数据去掉几个逗号还tm能解析 -->
+
+	<!-- 使用说明，不同的插件有不同的常量配置，具体可查阅插件包里的xml配置文件，其次问AI -->
+
+	<!-- 设置文件上传的解析器实现 value="jakarta" 表示使用 Jakarta Commons FileUpload 组件解析 multipart 
+		请求 其他可选值："cos"（使用 COS 解析器）、"pell"（使用 Pell 解析器），需对应引入依赖 -->
+	<constant name="struts.multipart.parser" value="jakarta" />
+
+	<!-- 设置上传文件的临时存储目录路径 注意：此处配置值"1000000"可能为错误（应为目录路径，如"temp/upload"），需改为实际可访问的目录 若未指定，默认使用 
+		Servlet 容器的临时目录（如 Tomcat 的 work 目录） -->
+	<!-- tomcat 11 context.xml context节点需要加上 allowCasualMultipartParsing="true" 属性，而tomcat10不用 -->
+	<!-- tomcat 10+ 为Jakarta相关api -->
+	<constant name="struts.multipart.saveDir"
+		value="D:/dev_tools/tomcat/tomcat10/webapps/s7/" />
+
+	<!-- 设置整个请求（包含所有文件和普通参数）的最大允许大小 单位：字节（104857600 字节 = 100MB，1MB = 1024×1024 字节） 超过此值会抛出"请求过大"异常 
+		注意：此处与下方重复配置，最终以最后一次配置为准 -->
+	<constant name="struts.multipart.maxSize" value="104857600" />
+
+	<!-- 设置一次请求中最多允许上传的文件数量 value="1000000" 表示最多允许上传 100 万个文件（实际场景中建议根据需求减小，避免恶意请求） -->
+	<constant name="struts.multipart.maxFiles" value="1000000" />
+
+	<!-- 设置单个上传文件的最大允许大小 单位：字节（1048576000 字节 = 1000MB = 1GB） 超过此值会抛出"单个文件过大"异常 -->
+	<constant name="struts.multipart.maxFileSize" value="1048576000" />
+
+	<!-- 重复配置：整个请求的最大允许大小（覆盖上方配置，最终生效值为 104857600 字节 = 100MB） 建议删除重复配置，保持唯一 -->
+	<constant name="struts.multipart.maxSize" value="104857600" />
+
+	<!-- 设置上传请求中字符串参数（非文件类型）的最大长度 单位：字节（104857600 字节 = 100MB） 用于限制表单中普通文本参数的大小，防止超大字符串参数攻击 -->
+	<constant name="struts.multipart.maxStringLength" value="4096" />
+
+	<constant name="struts.convention.default.parent.package"
+		value="json-default" />
+
+	<!-- 日期格式化 -->
+	<constant name="struts.date.formatter" value="yyyy-MM-dd HH:mm:ss" />
+
+	<!-- 约定相关配置 -->
+	<!-- 安全选项之包名白名单范围 -->
+	<constant name="struts.allowlist.packageNames"
+		value="com.demo.s7,com.opensymphony.xwork2,org.apache.struts2" />
+
+	<!-- 此选项建议为false,为true会导致映射没问题，但查找不到action -->
+	<constant name="struts.mapper.alwaysSelectFullNamespace" value="false" />
+
+	<!-- action中的分割符 -->
+	<constant name="struts.convention.action.name.separator" value="/" />
+
+	<!-- 当这个配置项设置为 true 时，Struts2 会尝试将请求映射到符合请求的所有 Action。 这意味着，在请求 URL 匹配多个 Action 
+		时，Struts 2 将尝试调用所有匹配的 Action 方法 -->
+	<constant name="struts.convention.action.mapAllMatches" value="true" />
+
+	<!-- 当这个配置项设置为 true 时，允许在不同的命名空间（Namespace）中使用相同的 Action 配置。这样，在不同的命名空间下可以有相同前缀的 
+		Action 名称而不会产生冲突 -->
+	<constant name="struts.mapper.action.prefix.crossNamespaces"
+		value="true" />
+
+
+	<constant name="struts.enable.SMI" value="true" />
+	<constant name="struts.enable.DynamicMethodInvocation" value="true" /> <!-- 启用 DMI -->
+	<constant name="struts.strictMethodInvocation.enable" value="true" /> <!-- 启用 SMI -->
+	<constant name="struts.strictMethodInvocation.methodRegex"
+		value="([a-zA-Z]*)" />
+
+	<!-- 结果页面的默认路径 -->
+	<constant name="struts.convention.result.path"
+		value="/WEB-INF/classes/templates/" />
+
+	<constant name="struts.devMode" value="false" />
+	<constant name="struts.convention.classes.reload" value="true" />
+	<constant name="struts.objectFactory" value="spring" />
+
+	<!-- 约定配置action名称为小写 -->
+	<constant name="struts.convention.action.name.lowercase" value="false" />
+
+	<!-- 有点复杂，描述过长 -->
+	<constant name="struts.convention.action.alwaysMapExecute"
+		value="false" />
+
+	<!-- 使用jackson 作为处理applicationo/json 格式参数的api -->
+	<bean type="org.apache.struts2.json.JSONWriter" name="myJSONWriter"
+		class="com.demo.s7.JacksonWriter" scope="prototype" />
+	<constant name="struts.json.writer" value="myJSONWriter" />
+
+	<!-- 处理未知action -->
+	<bean class="com.demo.s7.ErrHandler"
+		type="org.apache.struts2.UnknownHandler" name="ErrHandler"></bean>
+
+	<!-- 注册自定义拦截器 -->
+	<package name="jsonPackage" extends="json-default"
+		namespace="/user/api" strict-method-invocation="true">
+		<global-results>
+			<result type="json">
+				<param name="root">result</param>
+				<param name="enableGZIP">true</param>
+				<param name="excludeNullProperties">true</param>
+			</result>
+		</global-results>
+
+		<!-- 允许的action方法名称列表,不在这里的方法会执行ERROR结果 -->
+		<global-allowed-methods>list,add,update,delete</global-allowed-methods>
+
+		<!-- 这样配置相对来说是比较规范的，否则需要用注解形式配置在action类中 -->
+		<action name="*" class="com.demo.s7.actions.UserApiAction" method="{1}">
+			<!-- http 请求方法拦截器，用以拦截不符合请求方式的http方法,该拦截器逻辑如下 -->
+			<!-- 结合HttpPost/HttpGet 等注解使用,方法上的注解必须是特殊方法才可以生效,类注解则无条件生效,所以建议类上面用@HttpPost注解 -->
+			<interceptor-ref name="httpMethod">
+				<!-- 该拦截器有且只有一个参数，即不符合要求的请求结果字符串是什么 -->
+				<param name="badRequestResultName">badReq</param>
+			</interceptor-ref>
+
+			<!-- json 拦截器,用于自动将application/json参数封装到action中的root成员变量,即下面参数中的root -->
+			<interceptor-ref name="json">
+				<!-- root 为接收 application/json的根对象 -->
+				<param name="root">model</param>
+			</interceptor-ref>
+			<!-- 当拦截器拦截到非法http请求时默认走badReq结果 -->
+			<result type="json" name="badReq">
+				<param name="root">errorResult</param>
+			</result>
+
+			<!-- 当拦截器拦截到不在允许的action方法名称列表的非法请求时默认走error结果 -->
+			<result type="json" name="error">
+				<param name="root">errorResult</param>
+			</result>
+		</action>
+
+	</package>
+	<package name="upload" namespace="/upload" extends="json-default">
+		<action name="files" class="com.demo.s7.actions.UploadAction"
+			method="file">
+			<!-- 文件上传拦截器 -->
+			<interceptor-ref name="basicStack" />
+			<interceptor-ref name="actionFileUpload">
+				<param name="allowedTypes">image/jpeg,image/gif,image/png</param>
+			</interceptor-ref>
+			<interceptor-ref name="validation" />
+			<interceptor-ref name="workflow" />
+			<interceptor-ref name="defaultStack"></interceptor-ref>
+
+			<!-- 当拦截器拦截到非法http请求时默认走badReq结果 -->
+			<result type="json" name="badReq">
+				<param name="root">errorResult</param>
+			</result>
+
+			<!-- 当拦截器拦截到不在允许的action方法名称列表的非法请求时默认走error结果 -->
+			<result type="json" name="success">
+				<param name="root">result</param>
+			</result>
+			<!-- 当拦截器拦截到不在允许的action方法名称列表的非法请求时默认走error结果 -->
+			<result type="json" name="input">
+				<param name="root">errorResult</param>
+			</result>
+			<!-- 当拦截器拦截到不在允许的action方法名称列表的非法请求时默认走error结果 -->
+			<result type="json" name="error">
+				<param name="root">errorResult</param>
+			</result>
+		</action>
+		<action name="page" class="com.demo.s7.actions.UploadAction"
+			method="page">
+			<!-- 当拦截器拦截到不在允许的action方法名称列表的非法请求时默认走error结果 -->
+			<result type="freemarker" name="success">
+				<param name="location">/WEB-INF/classes/templates/upload.ftl</param>
+			</result>
+		</action>
+	</package>
+</struts>

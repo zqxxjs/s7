@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		https://www.springframework.org/schema/context/spring-context.xsd">
+
+	<context:property-placeholder
+		location="classpath:props/otherConfig.properties" />
+		
+	<context:component-scan base-package="com" />
+
+	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+		<constructor-arg name="propertyFileName"
+			value="props/jdbc.properties" />
+	</bean>
+
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">
+		<constructor-arg name="configuration" ref="hikariConfig" />
+	</bean>
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan" value="com" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.hbm2ddl.auto">${hbm2ddl.auto}</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="txManager"
+		class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<!-- 1. 核心：配置 Jackson 核心类 ObjectMapper，映射所有 spring.jackson 配置项 -->
+	<bean id="objectMapper"
+		class="com.fasterxml.jackson.databind.ObjectMapper">
+		<!-- 1.1 对应 spring.jackson.date-format=yyyy-MM-dd HH:mm:ss（日期格式化） -->
+		<property name="dateFormat">
+			<bean class="java.text.SimpleDateFormat">
+				<constructor-arg type="java.lang.String"
+					value="yyyy-MM-dd HH:mm:ss" />
+			</bean>
+		</property>
+
+		<!-- 1.2 对应 spring.jackson.default-property-inclusion=NON_NULL（序列化仅包含非空属性） -->
+		<property name="serializationInclusion">
+			<!-- 引用 Jackson 的 Include 枚举，值为 NON_NULL -->
+			<value type="com.fasterxml.jackson.annotation.JsonInclude.Include">NON_NULL</value>
+		</property>
+
+		<!-- 1.3 对应 spring.jackson.locale=zh_CN（本地化语言） -->
+		<property name="locale">
+			<bean class="java.util.Locale">
+				<constructor-arg type="java.lang.String" value="zh" />
+				<constructor-arg type="java.lang.String" value="CN" />
+			</bean>
+		</property>
+
+		<!-- 1.4 对应 spring.jackson.time-zone=GMT+8（时区配置） -->
+		<property name="timeZone">
+			<bean class="java.util.TimeZone" factory-method="getTimeZone">
+				<constructor-arg type="java.lang.String" value="GMT+8" />
+			</bean>
+		</property>
+
+		<!-- 1.5 对应 spring.jackson.visibility.field=ANY（字段可见性：允许访问任意修饰符的字段） -->
+		<property name="visibility">
+			<bean
+				class="com.fasterxml.jackson.databind.introspect.VisibilityChecker.Std"
+				factory-method="defaultInstance">
+			</bean>
+		</property>
+	</bean>
+
+
+	<import resource="spring-security.xml" />
+</beans>
