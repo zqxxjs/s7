@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.apache.struts2.ActionSupport;
 import org.apache.struts2.action.Action;
+import org.apache.struts2.interceptor.httpmethod.HttpGet;
 import org.apache.struts2.interceptor.httpmethod.HttpPost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ public class UserApiAction extends ActionSupport {
 		return result;
 	}
 
+	@HttpGet
 	public String list() {
 		logger.info(" action method running!");
 		this.result = R.success();

@@ -20,7 +20,6 @@ import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import ognl.OgnlRuntime;
 
 public class SpringUtil implements ServletContextListener {
 
@@ -29,7 +28,6 @@ public class SpringUtil implements ServletContextListener {
 
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
-		OgnlRuntime.setSecurityManager(null);
 		// 1. 获取ServletContext（Web应用全局上下文）
 		ServletContext servletContext = sce.getServletContext();
 

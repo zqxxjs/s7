@@ -1,5 +1,6 @@
 package com.demo.s7;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,13 +11,20 @@ import org.apache.struts2.action.Action;
 import org.apache.struts2.config.entities.ActionConfig;
 import org.apache.struts2.config.entities.ExceptionMappingConfig;
 import org.apache.struts2.config.entities.ResultConfig;
+import org.apache.struts2.dispatcher.DefaultDispatcherErrorHandler;
+import org.apache.struts2.json.JSONResult;
 import org.apache.struts2.result.Result;
 import org.apache.struts2.views.freemarker.FreemarkerResult;
+import org.springframework.stereotype.Component;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * 默认未知处理器，用于处理未知Action、未知结果和未知方法
  */
-public class ErrHandler implements UnknownHandler {
+@Component
+public class ErrHandler  extends DefaultDispatcherErrorHandler implements UnknownHandler{
 
 	/**
 	 * 处理未知Action：当找不到对应Action配置时调用
@@ -60,13 +68,30 @@ public class ErrHandler implements UnknownHandler {
 	 */
 	@Override
 	public Object handleUnknownActionMethod(Object action, String methodName) {
+		String ctype = ActionContext.getContext().getServletRequest().getContentType();
+		int code = ActionContext.getContext().getServletResponse().getStatus();
+		if (code != 200) {
+			if (ctype.toLowerCase().contains("json")) {
+				JSONResult r = new JSONResult();
+				r.setRoot("result");
+				ActionContext.getContext().getValueStack().set("result", R.fail(code));
+				return r;
+			}
+		}
+		FreemarkerResult fr = new FreemarkerResult(code + ".ftl");
+		return fr;
+	}
+
+	
+	@Override
+	public void handleError(HttpServletRequest request, HttpServletResponse response, int code, Exception e) {
 		try {
-			return action.getClass().getMethod(methodName).invoke(action);
-		} catch (Exception e) {
-			// 返回错误结果码
-			return "error";
+			response.sendRedirect(code + ".ftl");
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
 	}
+
 
 	/**
 	 * 未知Action的默认处理类

@@ -2,7 +2,7 @@
 <Configuration status="WARN">
     <Properties>
         <!-- 基础配置 -->
-        <Property name="logdir">D:/dev_tools/logs</Property>
+        <Property name="logdir">/home/swt/Documents/dev_tools/tomcat/tomcat11/logs</Property>
         <Property name="logfile-app">web-app</Property>
         <Property name="logfile-alm">web-alm</Property>
         <Property name="logfile-ope">web-ope</Property>
@@ -111,7 +111,7 @@
         </Logger>
 
         <!-- 根日志配置：区分不同日志的级别 -->
-        <Root level="info">
+        <Root level="debug">
             <AppenderRef ref="stdout" />
             <AppenderRef ref="app" level="info" />
             <!-- 告警日志只记录警告及以上级别 -->
