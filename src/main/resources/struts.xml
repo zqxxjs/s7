@@ -14,7 +14,7 @@
 	<!-- 设置上传文件的临时存储目录路径 注意：此处配置值"1000000"可能为错误（应为目录路径，如"temp/upload"），需改为实际可访问的目录 若未指定，默认使用 Servlet 容器的临时目录（如 Tomcat 的 work 目录） -->
 	<!-- tomcat 11 context.xml context节点需要加上 allowCasualMultipartParsing="true" 属性，而tomcat10不用 -->
 	<!-- tomcat 10+ 为Jakarta相关api -->
-	<constant name="struts.multipart.saveDir" value="/home/swt/Documents/dev_tools/tomcat/tomcat11/temp" />
+	<constant name="struts.multipart.saveDir" value="/home/swt/Documents/dev_tools/nginx/html/upload" />
 
 	<!-- 设置整个请求（包含所有文件和普通参数）的最大允许大小 单位：字节（104857600 字节 = 100MB，1MB = 1024×1024 字节） 超过此值会抛出"请求过大"异常 注意：此处与下方重复配置，最终以最后一次配置为准 -->
 	<constant name="struts.multipart.maxSize" value="104857600" />
@@ -34,7 +34,7 @@
 	<constant name="struts.convention.default.parent.package" value="json-default" />
 
 	<!-- 日期格式化 -->
-	<constant name="struts.date.formatter" value="yyyy-MM-dd HH:mm:ss" />
+	<constant name="struts.date.formatter" value="yyyyMMddHHmmss" />
 
 	<!-- 约定相关配置 -->
 	<!-- 安全选项之包名白名单范围 -->

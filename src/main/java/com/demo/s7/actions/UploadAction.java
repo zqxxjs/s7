@@ -2,12 +2,13 @@ package com.demo.s7.actions;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.struts2.ActionSupport;
 import org.apache.struts2.action.UploadedFilesAware;
 import org.apache.struts2.dispatcher.multipart.UploadedFile;
@@ -29,6 +30,7 @@ public class UploadAction extends ActionSupport implements UploadedFilesAware {
 	private static final long serialVersionUID = 1L;
 	private transient Map<String, Object> result;
 	private transient Map<String, Object> errorResult;
+	private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyyMMddHHmmssSSS");
 
 	@Value("${savePath}")
 	private String savePath;
@@ -47,11 +49,11 @@ public class UploadAction extends ActionSupport implements UploadedFilesAware {
 		// 遍历保存多个文件
 		List<String> lst = new ArrayList<>();
 		for (UploadedFile uploadedFile : uploadFiles) {
-			String name = uploadedFile.getAbsolutePath().replace(".tmp", ".png");
 			try {
-				File saveFile = new File(name);
-				FileUtils.moveFile(new File(uploadedFile.getAbsolutePath()), new File(name));
-				lst.add(visitUrlPrifix + FilenameUtils.getName(saveFile.getName()));
+				String newName = SDF.format(new Date()) + ".png";
+				File saveFile = new File(savePath + newName);
+				FileUtils.moveFile(new File(uploadedFile.getAbsolutePath()), saveFile);
+				lst.add(visitUrlPrifix + newName);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
