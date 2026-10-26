@@ -2,9 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Page No Found1!</title>
+<title>${errCode}</title>
 </head>
 <body>
-<h1>404,${errorMessage}!</h1>
+<h1>${errCode},${errMsg}!</h1>
 </body>
 </html>

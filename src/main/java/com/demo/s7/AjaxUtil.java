@@ -30,6 +30,38 @@ public class AjaxUtil {
 		}
 	}
 
+	public static void writeJSON(HttpServletResponse res, String errMsg) {
+		if (StringUtils.isNotBlank(errMsg)) {
+			if (res != null) {
+				try {
+					res.setContentType("application/json");
+					res.setCharacterEncoding("utf-8");
+					PrintWriter w = res.getWriter();
+					w.write(errMsg);
+					w.flush();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	public static void writeJSON(HttpServletResponse res, Object errMsg) {
+		if (errMsg != null && res != null) {
+			try {
+				ObjectMapper mapper = SpringUtil.tryGetBean(ObjectMapper.class);
+				String rs = mapper.writeValueAsString(errMsg);
+				res.setContentType("application/json");
+				res.setCharacterEncoding("utf-8");
+				PrintWriter w = res.getWriter();
+				w.write(rs);
+				w.flush();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	public static void writeJSON(Object result) {
 		if (result != null) {
 			if (result instanceof String s) {

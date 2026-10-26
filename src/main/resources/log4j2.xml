@@ -111,7 +111,7 @@
         </Logger>
 
         <!-- 根日志配置：区分不同日志的级别 -->
-        <Root level="debug">
+        <Root level="info">
             <AppenderRef ref="stdout" />
             <AppenderRef ref="app" level="info" />
             <!-- 告警日志只记录警告及以上级别 -->

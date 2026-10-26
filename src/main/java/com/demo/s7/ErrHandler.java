@@ -1,16 +1,11 @@
 package com.demo.s7;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
 
 import org.apache.struts2.ActionContext;
 import org.apache.struts2.StrutsException;
 import org.apache.struts2.UnknownHandler;
-import org.apache.struts2.action.Action;
 import org.apache.struts2.config.entities.ActionConfig;
-import org.apache.struts2.config.entities.ExceptionMappingConfig;
-import org.apache.struts2.config.entities.ResultConfig;
 import org.apache.struts2.dispatcher.DefaultDispatcherErrorHandler;
 import org.apache.struts2.json.JSONResult;
 import org.apache.struts2.result.Result;
@@ -19,35 +14,21 @@ import org.springframework.stereotype.Component;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 默认未知处理器，用于处理未知Action、未知结果和未知方法
  */
+@Slf4j
 @Component
-public class ErrHandler  extends DefaultDispatcherErrorHandler implements UnknownHandler{
+public class ErrHandler extends DefaultDispatcherErrorHandler implements UnknownHandler {
 
 	/**
 	 * 处理未知Action：当找不到对应Action配置时调用
 	 */
 	@Override
 	public ActionConfig handleUnknownAction(String namespace, String actionName) throws StrutsException {
-		// 创建默认的Action配置，指向一个通用的未知Action处理类
-		Map<String, ResultConfig> results = new HashMap<>();
-
-		// 配置默认结果：指向404错误页面
-		ResultConfig resultConfig = new ResultConfig.Builder(Action.SUCCESS, FreemarkerResult.class.getName())
-				.addParam("location", "/WEB-INF/classes/templates/errors/404.ftl").build();
-
-		results.put("success", resultConfig);
-
-		// 创建异常映射：处理可能的异常
-		Map<String, ExceptionMappingConfig> exceptionMappings = new HashMap<>();
-		exceptionMappings.put("java.lang.Exception",
-				new ExceptionMappingConfig.Builder("exception", "java.lang.Exception", "error").build());
-
-		// 构建并返回默认Action配置
-		return new ActionConfig.Builder(namespace, actionName, UnknownAction.class.getName() // 自定义的未知Action处理类
-		).addResultConfigs(results).build();
+		return new ActionConfig.Builder(namespace, actionName, UnknownAction.class.getName()).build();
 	}
 
 	/**
@@ -57,7 +38,7 @@ public class ErrHandler  extends DefaultDispatcherErrorHandler implements Unknow
 	public Result handleUnknownResult(ActionContext actionContext, String actionName, ActionConfig actionConfig,
 			String resultCode) throws StrutsException {
 		try {
-			return new FreemarkerResult("/WEB-INF/classes/templates/errors/500.ftl");
+			return errJSON();
 		} catch (Exception e) {
 			throw new StrutsException("处理未知结果时发生错误", e);
 		}
@@ -68,40 +49,58 @@ public class ErrHandler  extends DefaultDispatcherErrorHandler implements Unknow
 	 */
 	@Override
 	public Object handleUnknownActionMethod(Object action, String methodName) {
-		String ctype = ActionContext.getContext().getServletRequest().getContentType();
-		int code = ActionContext.getContext().getServletResponse().getStatus();
-		if (code != 200) {
-			if (ctype.toLowerCase().contains("json")) {
-				JSONResult r = new JSONResult();
-				r.setRoot("result");
-				ActionContext.getContext().getValueStack().set("result", R.fail(code));
-				return r;
-			}
-		}
-		FreemarkerResult fr = new FreemarkerResult(code + ".ftl");
-		return fr;
+		return errJSON();
 	}
 
-	
 	@Override
-	public void handleError(HttpServletRequest request, HttpServletResponse response, int code, Exception e) {
+	public void handleError(HttpServletRequest request, HttpServletResponse res, int code, Exception e) {
 		try {
-			response.sendRedirect(code + ".ftl");
-		} catch (IOException e1) {
+			String uuid = logError(e.getMessage());
+			AjaxUtil.writeJSON(res, R.fail(404, "错误编号:" + uuid));
+		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
 	}
-
 
 	/**
 	 * 未知Action的默认处理类
 	 */
 	public static class UnknownAction {
 		// 未知Action的默认处理方法
-		public String execute() {
-			// 可以在这里添加日志记录
-			ActionContext.getContext().put("errorMessage", "请求的资源不存在");
-			return "success";
+		public JSONResult execute() {
+			return errJSON();
 		}
+	}
+
+	public static FreemarkerResult errPage() {
+		FreemarkerResult fr = new FreemarkerResult("error.ftl");
+		setPageErrInfo();
+		return fr;
+	}
+
+	public static JSONResult errJSON() {
+		JSONResult json = new JSONResult();
+		setJSONErrInfo();
+		json.setRoot("result");
+		return json;
+	}
+
+	public static void setPageErrInfo() {
+		ActionContext.getContext().getValueStack().set("errCode", 404);
+		ActionContext.getContext().getValueStack().set("errMsg", "发生了一些错误，等会儿再试试吧！");
+	}
+
+	public static void setJSONErrInfo() {
+		String uuid = logError("资源路径不存在或请求方式不正确！");
+		String errMsg = "资源路径不存在或请求方式不正确，请联系管理员,错误编号：" + uuid;
+		ActionContext.getContext().getValueStack().set("result", R.fail(404, errMsg));
+	}
+
+	public static String logError(String errMsg) {
+		String uuid = UUID.randomUUID().toString();
+		HttpServletRequest req = ActionContext.getContext().getServletRequest();
+		String uri = req.getRequestURI();
+		log.error("visit url:{}, errCode:{}, errMsg:{}", uri, uuid, errMsg);
+		return uuid;
 	}
 }
